@@ -6,7 +6,7 @@ import { getCurrentState } from './state';
 
 const Constants = require('../shared/constants');
 
-const { PLAYER_RADIUS, PLAYER_MAX_HP, BULLET_RADIUS, MAP_SIZE } = Constants;
+const { PLAYER_RADIUS, PLAYER_MAX_HP, MAP_SIZE } = Constants;
 
 // Get the canvas graphics context
 const canvas = document.getElementById('game-canvas');
@@ -14,7 +14,7 @@ const context = canvas.getContext('2d');
 setCanvasDimensions();
 
 const img = new Image();
-img.src = '/assets/bg.jpg';
+img.src = 'assets/bg.jpg';
 
 function setCanvasDimensions() {
   // On small screens (e.g. phones), we want to "zoom out" so players can still see at least
@@ -27,7 +27,7 @@ function setCanvasDimensions() {
 window.addEventListener('resize', debounce(40, setCanvasDimensions));
 
 function render() {
-  const { me, others, bullets } = getCurrentState();
+  const { me, others, birds } = getCurrentState();
   if (!me) {
     return;
   }
@@ -40,8 +40,9 @@ function render() {
   context.lineWidth = 1;
   context.strokeRect(canvas.width / 2 - me.x, canvas.height / 2 - me.y, MAP_SIZE, MAP_SIZE);
 
-  // Draw all bullets
-  bullets.forEach(renderBullet.bind(null, me));
+  // Draw all birds
+  console.log('hi', birds.length);
+  birds.forEach(renderBird.bind(null, me));
 
   // Draw all players
   renderPlayer(me, me);
@@ -68,62 +69,37 @@ function renderBackground(x, y) {
 
 // Renders a ship at the given coordinates
 function renderPlayer(me, player) {
-  const { x, y, direction, xHistory, yHistory } = player;
-  const canvasX = canvas.width / 2 + x - me.x;
-  const canvasY = canvas.height / 2 + y - me.y;
+  const { xHistory, yHistory } = player;
+  const offsetX = canvas.width / 2 - me.x;
+  const offsetY = canvas.height / 2 - me.y;
 
   // Draw ship
-  context.save();
-  context.translate(canvasX, canvasY);
-  context.rotate(direction);
-  context.drawImage(
-    getAsset('ship.svg'),
-    -PLAYER_RADIUS,
-    -PLAYER_RADIUS,
-    PLAYER_RADIUS * 2,
-    PLAYER_RADIUS * 2,
-  );
-  context.restore();
-
-  // Draw health bar
-  context.fillStyle = 'white';
-  context.fillRect(
-    canvasX - PLAYER_RADIUS,
-    canvasY + PLAYER_RADIUS + 8,
-    PLAYER_RADIUS * 2,
-    2,
-  );
-  context.fillStyle = 'red';
-  context.fillRect(
-    canvasX - PLAYER_RADIUS + PLAYER_RADIUS * 2 * player.hp / PLAYER_MAX_HP,
-    canvasY + PLAYER_RADIUS + 8,
-    PLAYER_RADIUS * 2 * (1 - player.hp / PLAYER_MAX_HP),
-    2,
-  );
+  renderBird(me, player);
 
   // Draw trail
-  // console.log(xHistory);
-  // console.log(xHistory[2]);
-  // console.log(canvas.width / 2 - me.x + xHistory[0], canvas.height / 2 - me.y + yHistory[0], xHistory[0], yHistory[0]);
   context.beginPath();
-  context.moveTo(canvas.width / 2 - me.x + xHistory[0], canvas.height / 2 - me.y + yHistory[0]);
+  context.moveTo(offsetX + xHistory[0], offsetY + yHistory[0]);
   for (let i = 1; i < xHistory.length; i++) {
-    context.lineTo(canvas.width / 2 - me.x + xHistory[i], canvas.height / 2 - me.y + yHistory[i]);
+    context.lineTo(offsetX + xHistory[i], offsetY + yHistory[i]);
   }
   context.strokeStyle = 'white';
   context.lineWidth = 5;
   context.stroke();
 }
 
-function renderBullet(me, bullet) {
-  const { x, y } = bullet;
-  context.drawImage(
-    getAsset('bullet.svg'),
-    canvas.width / 2 + x - me.x - BULLET_RADIUS,
-    canvas.height / 2 + y - me.y - BULLET_RADIUS,
-    BULLET_RADIUS * 2,
-    BULLET_RADIUS * 2,
-  );
+function renderBird(me, bird) {
+  const { x, y, direction } = bird;
+  const offsetX = canvas.width / 2 - me.x + x;
+  const offsetY = canvas.height / 2 - me.y + y;
+  const oppositeDirection = direction + Math.PI;
+
+  context.beginPath();
+  context.moveTo(offsetX, offsetY);
+  context.lineTo(offsetX + Math.sin(oppositeDirection - Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS, offsetY - Math.cos(oppositeDirection - Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS);
+  context.lineTo(offsetX + Math.sin(oppositeDirection) * Constants.BIRD_RADIUS * 0.65, offsetY - Math.cos(oppositeDirection) * Constants.BIRD_RADIUS * 0.65);
+  context.lineTo(offsetX + Math.sin(oppositeDirection + Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS, offsetY - Math.cos(oppositeDirection + Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS);
+  context.fillStyle = 'white';
+  context.fill();
 }
 
 function renderMainMenu() {

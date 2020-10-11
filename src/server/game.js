@@ -1,15 +1,33 @@
 const Constants = require('../shared/constants');
+const Utils = require('../shared/utils');
 const Player = require('./player');
+const Bird = require('./bird');
 const applyCollisions = require('./collisions');
+const { MAP_SIZE } = require('../shared/constants');
 
 class Game {
   constructor() {
     this.sockets = {};
     this.players = {};
-    this.bullets = [];
+    this.birds = [];
     this.lastUpdateTime = Date.now();
     this.shouldSendUpdate = false;
+    this.initBirds();
     setInterval(this.update.bind(this), 1000 / 60);
+  }
+
+  initBirds() {
+    this.birds = [];
+    for (let i = 0; i < Constants.BIRD_TOTAL; i++) {
+      this.birds.push(
+        new Bird(
+          null,
+          Utils.random_normal() * MAP_SIZE,
+          Utils.random_normal() * MAP_SIZE,
+          Math.random() * Math.PI * 2,
+        ),
+      );
+    }
   }
 
   addPlayer(socket, username) {
@@ -38,33 +56,20 @@ class Game {
     const dt = (now - this.lastUpdateTime) / 1000;
     this.lastUpdateTime = now;
 
-    // Update each bullet
-    // const bulletsToRemove = [];
-    // this.bullets.forEach(bullet => {
-    //   if (bullet.update(dt)) {
-    //     // Destroy this bullet
-    //     bulletsToRemove.push(bullet);
-    //   }
-    // });
-    // this.bullets = this.bullets.filter(bullet => !bulletsToRemove.includes(bullet));
+    // Update each bird
+    this.birds.forEach(bird => {
+      bird.update(dt);
+    });
 
     // Update each player
     Object.keys(this.sockets).forEach(playerID => {
       const player = this.players[playerID];
       player.update(dt);
-      // if (newBullet) {
-      //   this.bullets.push(newBullet);
-      // }
     });
 
     // Apply collisions, give players score for hitting bullets
-    // const destroyedBullets = applyCollisions(Object.values(this.players), this.bullets);
-    // destroyedBullets.forEach(b => {
-    //   if (this.players[b.parentID]) {
-    //     this.players[b.parentID].onDealtDamage();
-    //   }
-    // });
-    // this.bullets = this.bullets.filter(bullet => !destroyedBullets.includes(bullet));
+    const destroyedBirds = applyCollisions(Object.values(this.players), this.birds);
+    this.birds = this.birds.filter(bird => !destroyedBirds.includes(bird));
 
     // Check if any players are dead
     Object.keys(this.sockets).forEach(playerID => {
@@ -99,17 +104,19 @@ class Game {
 
   createUpdate(player, leaderboard) {
     const nearbyPlayers = Object.values(this.players).filter(
-      p => p !== player && p.distanceTo(player) <= Constants.MAP_SIZE / 2,
+      p => p !== player && p.distanceToSqrd(player) <= Constants.VIEW_DISTANCE ** 2,
     );
-    const nearbyBullets = this.bullets.filter(
-      b => b.distanceTo(player) <= Constants.MAP_SIZE / 2,
+    const nearbyBirds = this.birds.filter(
+      b => b.distanceToSqrd(player) <= Constants.VIEW_DISTANCE ** 2,
     );
+
+    console.log(this.birds.length, nearbyBirds.length);
 
     return {
       t: Date.now(),
       me: player.serializeForUpdate(),
       others: nearbyPlayers.map(p => p.serializeForUpdate()),
-      bullets: nearbyBullets.map(b => b.serializeForUpdate()),
+      birds: nearbyBirds.map(b => b.serializeForUpdate()),
       leaderboard,
     };
   }

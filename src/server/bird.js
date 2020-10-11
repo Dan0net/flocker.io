@@ -2,10 +2,10 @@ const shortid = require('shortid');
 const ObjectClass = require('./object');
 const Constants = require('../shared/constants');
 
-class Bullet extends ObjectClass {
-  constructor(parentID, x, y, dir) {
-    super(shortid(), x, y, dir, Constants.BULLET_SPEED);
-    this.parentID = parentID;
+class Bird extends ObjectClass {
+  constructor(playerID, x, y, dir) {
+    super(shortid(), x, y, dir, 200);
+    this.playerID = playerID;
   }
 
   // Returns true if the bullet should be destroyed
@@ -15,4 +15,4 @@ class Bullet extends ObjectClass {
   }
 }
 
-module.exports = Bullet;
+module.exports = Bird;

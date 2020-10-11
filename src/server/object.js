@@ -10,14 +10,15 @@ class Object {
   }
 
   update(dt) {
-    this.x += dt * this.speed * Math.sin(this.direction);
+    this.x = (this.x + dt * this.speed * Math.sin(this.direction) + Constants.MAP_SIZE) % Constants.MAP_SIZE;
     this.y -= dt * this.speed * Math.cos(this.direction);
+    this.y = Math.max(0, Math.min(Constants.MAP_SIZE, this.y));
   }
 
-  distanceTo(object) {
+  distanceToSqrd(object) {
     const dx = this.x - object.x;
     const dy = this.y - object.y;
-    return Math.sqrt(dx * dx + dy * dy);
+    return dx * dx + dy * dy;
   }
 
   setDirection(dir) {
@@ -29,6 +30,7 @@ class Object {
       id: this.id,
       x: this.x,
       y: this.y,
+      direction: this.direction,
     };
   }
 }
