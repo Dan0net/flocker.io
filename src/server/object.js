@@ -1,3 +1,5 @@
+const Constants = require('../shared/constants');
+
 class Object {
   constructor(id, x, y, dir, speed) {
     this.id = id;

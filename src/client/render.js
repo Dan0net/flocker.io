@@ -13,10 +13,13 @@ const canvas = document.getElementById('game-canvas');
 const context = canvas.getContext('2d');
 setCanvasDimensions();
 
+const img = new Image();
+img.src = '/assets/bg.jpg';
+
 function setCanvasDimensions() {
   // On small screens (e.g. phones), we want to "zoom out" so players can still see at least
   // 800 in-game units of width.
-  const scaleRatio = Math.max(1, 800 / window.innerWidth);
+  const scaleRatio = Math.max(1, 1200 / window.innerWidth);
   canvas.width = scaleRatio * window.innerWidth;
   canvas.height = scaleRatio * window.innerHeight;
 }
@@ -60,11 +63,12 @@ function renderBackground(x, y) {
   backgroundGradient.addColorStop(1, 'gray');
   context.fillStyle = backgroundGradient;
   context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(img, canvas.width / 2 - x, canvas.height / 2 - y, MAP_SIZE, MAP_SIZE);
 }
 
 // Renders a ship at the given coordinates
 function renderPlayer(me, player) {
-  const { x, y, direction } = player;
+  const { x, y, direction, xHistory, yHistory } = player;
   const canvasX = canvas.width / 2 + x - me.x;
   const canvasY = canvas.height / 2 + y - me.y;
 
@@ -96,6 +100,19 @@ function renderPlayer(me, player) {
     PLAYER_RADIUS * 2 * (1 - player.hp / PLAYER_MAX_HP),
     2,
   );
+
+  // Draw trail
+  // console.log(xHistory);
+  // console.log(xHistory[2]);
+  // console.log(canvas.width / 2 - me.x + xHistory[0], canvas.height / 2 - me.y + yHistory[0], xHistory[0], yHistory[0]);
+  context.beginPath();
+  context.moveTo(canvas.width / 2 - me.x + xHistory[0], canvas.height / 2 - me.y + yHistory[0]);
+  for (let i = 1; i < xHistory.length; i++) {
+    context.lineTo(canvas.width / 2 - me.x + xHistory[i], canvas.height / 2 - me.y + yHistory[i]);
+  }
+  context.strokeStyle = 'white';
+  context.lineWidth = 5;
+  context.stroke();
 }
 
 function renderBullet(me, bullet) {
