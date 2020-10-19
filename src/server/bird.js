@@ -33,7 +33,6 @@ class Bird extends ObjectClass {
 
       if (distance && distance < BIRD_DISTANCE) {
         forces.separation.add(diff.clone().scaleTo(-1 / distance)).active = true;
-        // console.log(forces.separation);
       }
 
       if (distance < Constants.flockmateRadius) {
@@ -42,8 +41,6 @@ class Bird extends ObjectClass {
       }
     });
 
-    // console.log(this.acceleration.x, this.acceleration.y);
-
     this.addForceToAcceleration(forces.alignment, Constants.alignmentForce);
     this.addForceToAcceleration(forces.cohesion, Constants.cohesionForce);
     this.addForceToAcceleration(forces.separation, Constants.separationForce);
@@ -51,10 +48,6 @@ class Bird extends ObjectClass {
     this.velocity.add(this.acceleration.clone().scale(dt * 60)).truncate(Constants.maxVelocity);
 
     this.position.add(this.velocity.clone().scale(dt * Constants.BIRD_SPEED));
-    // if (this.velocity.x === 0) {
-    //   console.log(this.alignment);
-    //   console.log(this.acceleration);
-    // }
 
     this.position = this.position.wrap(MAP_SIZE_VEC);
   }
@@ -64,9 +57,7 @@ class Bird extends ObjectClass {
       force.scaleTo(Constants.maxVelocity);
       force.subtract(this.velocity);
       force.truncate(forceConstant);
-      // console.log('align', force);
       this.acceleration.add(force);
-      // console.log(this.acceleration);
     }
   }
 

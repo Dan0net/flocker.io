@@ -7,12 +7,14 @@ import { getCurrentState } from './state';
 const Constants = require('../shared/constants');
 const Vec2 = require('../shared/vec2');
 
-const { PLAYER_RADIUS, MAP_SIZE } = Constants;
+const { PLAYER_RADIUS, MAP_SIZE, CHUNK_SIZE } = Constants;
 
 // Get the canvas graphics context
 const canvas = document.getElementById('game-canvas');
 const context = canvas.getContext('2d');
 setCanvasDimensions();
+const CHUNKS_X = Math.floor(MAP_SIZE / CHUNK_SIZE);
+const CHUNKS_Y = Math.floor(MAP_SIZE / CHUNK_SIZE);
 
 const img = new Image();
 img.src = 'assets/bg.jpg';
@@ -20,7 +22,7 @@ img.src = 'assets/bg.jpg';
 function setCanvasDimensions() {
   // On small screens (e.g. phones), we want to "zoom out" so players can still see at least
   // 800 in-game units of width.
-  const scaleRatio = Math.max(1, 1200 / window.innerWidth);
+  const scaleRatio = Math.max(1, 2400 / window.innerWidth);
   canvas.width = scaleRatio * window.innerWidth;
   canvas.height = scaleRatio * window.innerHeight;
 }
@@ -53,6 +55,8 @@ function render() {
 function renderBackground(x, y) {
   const backgroundX = MAP_SIZE / 2 - x + canvas.width / 2;
   const backgroundY = MAP_SIZE / 2 - y + canvas.height / 2;
+  const backgroundL = canvas.width / 2 - x;
+  const backgroundT = canvas.height / 2 - y;
   const backgroundGradient = context.createRadialGradient(
     backgroundX,
     backgroundY,
@@ -65,7 +69,25 @@ function renderBackground(x, y) {
   backgroundGradient.addColorStop(1, 'gray');
   context.fillStyle = backgroundGradient;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(img, canvas.width / 2 - x, canvas.height / 2 - y, MAP_SIZE, MAP_SIZE);
+  context.drawImage(img, backgroundL, backgroundT, MAP_SIZE, MAP_SIZE);
+
+  for (let i = 0; i < CHUNKS_X; i++) {
+    context.beginPath();
+    context.moveTo(backgroundL, backgroundT + i * CHUNK_SIZE);
+    context.lineTo(backgroundL + MAP_SIZE, backgroundT + i * CHUNK_SIZE);
+    context.strokeStyle = 'lightblue';
+    context.lineWidth = 1;
+    context.stroke();
+  }
+
+  for (let i = 0; i < CHUNKS_Y; i++) {
+    context.beginPath();
+    context.moveTo(backgroundL + i * CHUNK_SIZE, backgroundT);
+    context.lineTo(backgroundL + i * CHUNK_SIZE, backgroundT + MAP_SIZE);
+    context.strokeStyle = 'lightblue';
+    context.lineWidth = 1;
+    context.stroke();
+  }
 }
 
 // Renders a ship at the given coordinates
@@ -104,7 +126,7 @@ function renderBird(me, bird) {
   context.beginPath();
   context.moveTo(offsetX + Math.sin(direction) * Constants.BIRD_RADIUS, offsetY - Math.cos(direction) * Constants.BIRD_RADIUS);
   context.lineTo(offsetX + Math.sin(direction + Math.PI - Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS, offsetY - Math.cos(direction + Math.PI - Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS);
-  context.lineTo(offsetX + Math.sin(direction + Math.PI) * Constants.BIRD_RADIUS * 0.65, offsetY - Math.cos(direction + Math.PI) * Constants.BIRD_RADIUS * 0.65);
+  context.lineTo(offsetX + Math.sin(direction + Math.PI) * Constants.BIRD_RADIUS * 0.3, offsetY - Math.cos(direction + Math.PI) * Constants.BIRD_RADIUS * 0.3);
   context.lineTo(offsetX + Math.sin(direction + Math.PI + Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS, offsetY - Math.cos(direction + Math.PI + Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS);
   context.fillStyle = color;
   context.fill();

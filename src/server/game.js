@@ -3,7 +3,11 @@ const Utils = require('../shared/utils');
 const Player = require('./player');
 const Bird = require('./bird');
 const applyCollisions = require('./collisions');
-const { MAP_SIZE } = require('../shared/constants');
+const { MAP_SIZE, CHUNK_SIZE } = require('../shared/constants');
+const { forEach } = require('lodash');
+
+const CHUNKS_X = Math.floor(MAP_SIZE / CHUNK_SIZE);
+const CHUNKS_Y = Math.floor(MAP_SIZE / CHUNK_SIZE);
 
 class Game {
   constructor() {
@@ -12,8 +16,21 @@ class Game {
     this.birds = [];
     this.lastUpdateTime = Date.now();
     this.shouldSendUpdate = false;
+    
+    this.initChunks();
     this.initBirds();
+
     setInterval(this.update.bind(this), 1000 / 60);
+  }
+
+  initChunks() {
+    this.chunks = [];
+    for (let i = 0; i < CHUNKS_X; i++) {
+      this.chunks.push([]);
+      for (let j = 0; j < CHUNKS_Y; j++) {
+        this.chunks[i][j] = [];
+      }
+    }
   }
 
   initBirds() {
@@ -58,16 +75,65 @@ class Game {
     }
   }
 
+  resetChunks() {
+    for (let i = 0; i < CHUNKS_X; i++) {
+      for (let j = 0; j < CHUNKS_Y; j++) {
+        this.chunks[i][j] = [];
+      }
+    }
+  }
+
+  addChunkBirds() {
+    this.birds.forEach(bird => {
+      const chunkX = Math.floor(bird.position.x / CHUNK_SIZE);
+      const chunkY = Math.floor(bird.position.y / CHUNK_SIZE);
+      this.chunks[chunkX][chunkY].push(bird);
+    });
+  }
+
   update() {
     // Calculate time elapsed
     const now = Date.now();
     const dt = (now - this.lastUpdateTime) / 1000;
     this.lastUpdateTime = now;
 
-    // Update each bird
-    this.birds.forEach(bird => {
-      bird.update(dt, this.birds);
-    });
+    let totalUpdates = 0;
+
+    // this.birds.forEach(bird => {
+    //   bird.update(dt, this.birds);
+    //   totalUpdates += this.birds.length;
+    // });
+
+    function updateBirds(birds, neighbourBirds) {
+      birds.forEach(bird => {
+        bird.update(dt, neighbourBirds);
+      });
+      return neighbourBirds.length;
+    }
+
+    for (let i = 0; i < CHUNKS_X; i++) {
+      const l = (i - 1 + CHUNKS_X) % CHUNKS_X;
+      const r = (i + 1 + CHUNKS_X) % CHUNKS_X;
+      for (let j = 0; j < CHUNKS_Y; j++) {
+        const t = (j - 1 + CHUNKS_Y) % CHUNKS_Y;
+        const b = (j + 1 + CHUNKS_Y) % CHUNKS_Y;
+        const birdsInChunk = this.chunks[i][j];
+
+        totalUpdates += updateBirds(birdsInChunk, birdsInChunk);
+        totalUpdates += updateBirds(birdsInChunk, this.chunks[l][j]);
+        totalUpdates += updateBirds(birdsInChunk, this.chunks[r][j]);
+        totalUpdates += updateBirds(birdsInChunk, this.chunks[i][b]);
+        totalUpdates += updateBirds(birdsInChunk, this.chunks[i][t]);
+        totalUpdates += updateBirds(birdsInChunk, this.chunks[l][t]);
+        totalUpdates += updateBirds(birdsInChunk, this.chunks[r][t]);
+        totalUpdates += updateBirds(birdsInChunk, this.chunks[r][b]);
+        totalUpdates += updateBirds(birdsInChunk, this.chunks[l][b]);
+      }
+    }
+    this.resetChunks();
+    this.addChunkBirds();
+
+    console.log('bird comps', totalUpdates, dt);
 
     // Update each player
     Object.keys(this.sockets).forEach(playerID => {

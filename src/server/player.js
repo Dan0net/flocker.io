@@ -1,6 +1,7 @@
 const ObjectClass = require('./object');
 const Constants = require('../shared/constants');
 const Vec2 = require('../shared/vec2');
+const { MAP_SIZE } = require('../shared/constants');
 
 const FRICTION = (Constants.PLAYER_ACCELERATION + Constants.GRAVITY_ACCELERATION) / Constants.PLAYER_MAX_SPEED;
 const POSITION_MIN = new Vec2(0, 0);
@@ -18,7 +19,7 @@ class Player extends ObjectClass {
     this.xHistory = [];
     this.yHistory = [];
     this.length = 100;
-    console.log(Math.E, Math.LN2, Math.SQRT1_2);
+    console.log(FRICTION);
   }
 
   // Returns a newly created bullet, or null.
@@ -38,7 +39,9 @@ class Player extends ObjectClass {
     this.velocity = this.velocity.add(this.acceleration.clone().add(GRAVITY_ACCELERATION_VEC).scale(dt)).scale(1 - (FRICTION * dt)).scaleToMinLength(Constants.PLAYER_MIN_SPEED);
     console.log(this.acceleration.length(), this.velocity.length());
     
-    this.position = this.position.add(this.velocity.clone().scale(dt)).max(POSITION_MIN).min(POSITION_MAX);
+    this.position = this.position.add(this.velocity.clone().scale(dt));
+    this.position.x = (this.position.x + MAP_SIZE) % MAP_SIZE;
+    this.position.y = Math.max(Math.min(this.position.y, MAP_SIZE), 0);
 
     this.xHistory.push(this.position.x);
     this.yHistory.push(this.position.y);
