@@ -22,8 +22,10 @@ class Game {
       this.birds.push(
         new Bird(
           null,
-          Utils.random_normal() * MAP_SIZE,
-          Utils.random_normal() * MAP_SIZE,
+          // Utils.random_normal() * MAP_SIZE,
+          // Utils.random_normal() * MAP_SIZE,
+          Math.random() * MAP_SIZE,
+          Math.random() * MAP_SIZE,
           Math.random() * Math.PI * 2,
         ),
       );
@@ -44,9 +46,15 @@ class Game {
     delete this.players[socket.id];
   }
 
-  handleInput(socket, dir) {
+  handleDirectionUpdate(socket, dir) {
     if (this.players[socket.id]) {
       this.players[socket.id].setDirection(dir);
+    }
+  }
+
+  handleBoostUpdate(socket, boost) {
+    if (this.players[socket.id]) {
+      this.players[socket.id].setBoost(boost);
     }
   }
 
@@ -58,7 +66,7 @@ class Game {
 
     // Update each bird
     this.birds.forEach(bird => {
-      bird.update(dt);
+      bird.update(dt, this.birds);
     });
 
     // Update each player
@@ -68,8 +76,8 @@ class Game {
     });
 
     // Apply collisions, give players score for hitting bullets
-    const destroyedBirds = applyCollisions(Object.values(this.players), this.birds);
-    this.birds = this.birds.filter(bird => !destroyedBirds.includes(bird));
+    applyCollisions(Object.values(this.players), this.birds);
+    // this.birds = this.birds.filter(bird => !destroyedBirds.includes(bird));
 
     // Check if any players are dead
     Object.keys(this.sockets).forEach(playerID => {
@@ -104,13 +112,13 @@ class Game {
 
   createUpdate(player, leaderboard) {
     const nearbyPlayers = Object.values(this.players).filter(
-      p => p !== player && p.distanceToSqrd(player) <= Constants.VIEW_DISTANCE ** 2,
+      p => p !== player && p.position.distanceToSqrd(player.position) <= Constants.VIEW_DISTANCE ** 2,
     );
     const nearbyBirds = this.birds.filter(
-      b => b.distanceToSqrd(player) <= Constants.VIEW_DISTANCE ** 2,
+      b => b.position.distanceToSqrd(player.position) <= Constants.VIEW_DISTANCE ** 2,
     );
 
-    console.log(this.birds.length, nearbyBirds.length);
+    // console.log(this.birds.length, nearbyBirds.length);
 
     return {
       t: Date.now(),

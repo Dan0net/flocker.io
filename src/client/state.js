@@ -10,6 +10,15 @@ const gameUpdates = [];
 let gameStart = 0;
 let firstServerTimestamp = 0;
 
+const LINEAR_INTERPOLATE_KEYS = [
+  'positionX',
+  'positionY',
+  'accelerationX',
+  'accelerationY',
+  'velocityX',
+  'velocityY',
+]
+
 export function initState() {
   gameStart = 0;
   firstServerTimestamp = 0;
@@ -79,9 +88,9 @@ function interpolateObject(object1, object2, ratio) {
 
   const interpolated = {};
   Object.keys(object1).forEach(key => {
-    if (key === 'direction') {
+    if (key === 'moveDirection') {
       interpolated[key] = interpolateDirection(object1[key], object2[key], ratio);
-    } else if (['x', 'y'].includes(key)) {
+    } else if (LINEAR_INTERPOLATE_KEYS.includes(key)) {
       interpolated[key] = object1[key] + (object2[key] - object1[key]) * ratio;
     } else {
       interpolated[key] = object1[key];

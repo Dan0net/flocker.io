@@ -1,6 +1,6 @@
 // Learn more about this file at:
 // https://victorzhou.com/blog/build-an-io-game-part-1/#6-client-input-%EF%B8%8F
-import { updateDirection } from './networking';
+import { updateBoost, updateDirection } from './networking';
 
 function onMouseInput(e) {
   handleInput(e.clientX, e.clientY);
@@ -16,11 +16,27 @@ function handleInput(x, y) {
   updateDirection(dir);
 }
 
+function onKeyDownInput(e) {
+  console.log(e);
+  if (e.code === 'Space') {
+    updateBoost(true);
+  }
+}
+
+function onKeyUpInput(e) {
+  console.log(e);
+  if (e.code === 'Space') {
+    updateBoost(false);
+  }
+}
+
 export function startCapturingInput() {
   window.addEventListener('mousemove', onMouseInput);
   window.addEventListener('click', onMouseInput);
   window.addEventListener('touchstart', onTouchInput);
   window.addEventListener('touchmove', onTouchInput);
+  window.addEventListener('keydown', onKeyDownInput);
+  window.addEventListener('keyup', onKeyUpInput);
 }
 
 export function stopCapturingInput() {
@@ -28,4 +44,6 @@ export function stopCapturingInput() {
   window.removeEventListener('click', onMouseInput);
   window.removeEventListener('touchstart', onTouchInput);
   window.removeEventListener('touchmove', onTouchInput);
+  window.removeEventListener('keydown', onKeyDownInput);
+  window.removeEventListener('keyup', onKeyUpInput);
 }

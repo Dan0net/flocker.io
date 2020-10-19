@@ -1,36 +1,30 @@
 const Constants = require('../shared/constants');
+const Vec2 = require('../shared/vec2');
 
 class Object {
-  constructor(id, x, y, dir, speed) {
+  constructor(id, x, y, direction, color) {
     this.id = id;
-    this.x = x;
-    this.y = y;
-    this.direction = dir;
-    this.speed = speed;
+    this.position = new Vec2(x, y);
+    this.velocity = new Vec2(Math.sin(direction), Math.cos(direction)).scaleTo(Constants.maxVelocity);
+    this.acceleration = new Vec2();
+    this.color = color || 'white';
   }
 
   update(dt) {
-    this.x = (this.x + dt * this.speed * Math.sin(this.direction) + Constants.MAP_SIZE) % Constants.MAP_SIZE;
-    this.y -= dt * this.speed * Math.cos(this.direction);
-    this.y = Math.max(0, Math.min(Constants.MAP_SIZE, this.y));
-  }
-
-  distanceToSqrd(object) {
-    const dx = this.x - object.x;
-    const dy = this.y - object.y;
-    return dx * dx + dy * dy;
-  }
-
-  setDirection(dir) {
-    this.direction = dir;
+    this.velocity.add(this.acceleration.clone().scale(dt));
+    this.position.add(this.velocity.clone().scale(dt));
   }
 
   serializeForUpdate() {
     return {
       id: this.id,
-      x: this.x,
-      y: this.y,
-      direction: this.direction,
+      positionX: this.position.x,
+      positionY: this.position.y,
+      velocityX: this.velocity.x,
+      velocityY: this.velocity.y,
+      accelerationX: this.acceleration.x,
+      accelerationY: this.acceleration.y,
+      color: this.color,
     };
   }
 }

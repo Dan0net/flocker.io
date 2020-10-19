@@ -5,8 +5,9 @@ import { getAsset } from './assets';
 import { getCurrentState } from './state';
 
 const Constants = require('../shared/constants');
+const Vec2 = require('../shared/vec2');
 
-const { PLAYER_RADIUS, PLAYER_MAX_HP, MAP_SIZE } = Constants;
+const { PLAYER_RADIUS, MAP_SIZE } = Constants;
 
 // Get the canvas graphics context
 const canvas = document.getElementById('game-canvas');
@@ -33,15 +34,15 @@ function render() {
   }
 
   // Draw background
-  renderBackground(me.x, me.y);
+  renderBackground(me.positionX, me.positionY);
 
   // Draw boundaries
   context.strokeStyle = 'black';
   context.lineWidth = 1;
-  context.strokeRect(canvas.width / 2 - me.x, canvas.height / 2 - me.y, MAP_SIZE, MAP_SIZE);
+  context.strokeRect(canvas.width / 2 - me.positionX, canvas.height / 2 - me.positionY, MAP_SIZE, MAP_SIZE);
 
   // Draw all birds
-  console.log('hi', birds.length);
+  // console.log('hi', birds.length);
   birds.forEach(renderBird.bind(null, me));
 
   // Draw all players
@@ -70,11 +71,8 @@ function renderBackground(x, y) {
 // Renders a ship at the given coordinates
 function renderPlayer(me, player) {
   const { xHistory, yHistory } = player;
-  const offsetX = canvas.width / 2 - me.x;
-  const offsetY = canvas.height / 2 - me.y;
-
-  // Draw ship
-  renderBird(me, player);
+  const offsetX = canvas.width / 2 - me.positionX;
+  const offsetY = canvas.height / 2 - me.positionY;
 
   // Draw trail
   context.beginPath();
@@ -85,20 +83,30 @@ function renderPlayer(me, player) {
   context.strokeStyle = 'white';
   context.lineWidth = 5;
   context.stroke();
+
+  // Draw ship
+  renderBird(me, player);
 }
 
 function renderBird(me, bird) {
-  const { x, y, direction } = bird;
-  const offsetX = canvas.width / 2 - me.x + x;
-  const offsetY = canvas.height / 2 - me.y + y;
-  const oppositeDirection = direction + Math.PI;
+  const { positionX, positionY, velocityX, velocityY, color } = bird;
+  const offsetX = canvas.width / 2 - me.positionX + positionX;
+  const offsetY = canvas.height / 2 - me.positionY + positionY;
+  const direction = Math.atan2(velocityX, -velocityY);
+  
 
   context.beginPath();
-  context.moveTo(offsetX, offsetY);
-  context.lineTo(offsetX + Math.sin(oppositeDirection - Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS, offsetY - Math.cos(oppositeDirection - Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS);
-  context.lineTo(offsetX + Math.sin(oppositeDirection) * Constants.BIRD_RADIUS * 0.65, offsetY - Math.cos(oppositeDirection) * Constants.BIRD_RADIUS * 0.65);
-  context.lineTo(offsetX + Math.sin(oppositeDirection + Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS, offsetY - Math.cos(oppositeDirection + Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS);
-  context.fillStyle = 'white';
+  context.arc(offsetX, offsetY, Constants.BIRD_RADIUS, 0, Math.PI * 2, true);
+  context.strokeStyle = color;
+  context.lineWidth = 1;
+  context.stroke();
+
+  context.beginPath();
+  context.moveTo(offsetX + Math.sin(direction) * Constants.BIRD_RADIUS, offsetY - Math.cos(direction) * Constants.BIRD_RADIUS);
+  context.lineTo(offsetX + Math.sin(direction + Math.PI - Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS, offsetY - Math.cos(direction + Math.PI - Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS);
+  context.lineTo(offsetX + Math.sin(direction + Math.PI) * Constants.BIRD_RADIUS * 0.65, offsetY - Math.cos(direction + Math.PI) * Constants.BIRD_RADIUS * 0.65);
+  context.lineTo(offsetX + Math.sin(direction + Math.PI + Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS, offsetY - Math.cos(direction + Math.PI + Constants.BIRD_RADIANS_WIDTH) * Constants.BIRD_RADIUS);
+  context.fillStyle = color;
   context.fill();
 }
 
